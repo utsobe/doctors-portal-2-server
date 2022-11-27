@@ -26,7 +26,7 @@ async function run() {
         });
 
         app.get('/available', async (req, res) => {
-            const date = req.query.date || 'May 11, 2022';
+            const date = req.query.date;
 
             // step 1: get all services
 
@@ -36,8 +36,17 @@ async function run() {
             const query = { date: date };
             const bookings = await bookingCollection.find(query).toArray();
 
-            res.send(bookings);
-        })
+            // for each service, find bookings for that service
+            services.forEach(service => {
+                const serviceBookings = bookings.filter(book => book.treatment === service.name);
+                const bookingSlots = serviceBookings.map(book => book.slot);
+                const available = service.slots.filter(slot => !bookingSlots.includes(slot));
+                service.slots = available;
+            });
+
+
+            res.send(services);
+        });
 
         /**
          * API Naming Convention
